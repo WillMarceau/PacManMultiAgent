@@ -86,12 +86,23 @@ class ReflexAgent(Agent):
         scared = min(newScaredTimes)
         closeGhostDistance = float('inf')
 
+        score = successorGameState.getScore()
 
+        # pen for remaining food
+        score -= 1.5 * foodCount
 
-        
+        # reward for eating food
+        if currentGameState.getNumFood() > successorGameState.getNumFood():
+            score += 50
+
         for element in newGhostPositions:
-            if manhattanDistance(newPos, element) < ghostDistance:
-                ghostDistance = manhattanDistance(newPos, element)
+            ghostDistance = manhattanDistance(newPos, element)
+            # big pen for being close to ghost
+            if ghostDistance < 2:
+                score -= 50
+            else:
+            # reward for being far in general
+                score -= (1 / 1 + ghostDistance) * 1.5
             #ghostDistance += manhattanDistance(newPos, element)
 
         #print(ghostDistance)
@@ -105,26 +116,30 @@ class ReflexAgent(Agent):
 
         #print(foodDistance)
 
+        
+        # pen for remaining food
+        score -= 5 * foodCount
+
+        # no food left
         if foodDistance == float('inf'):
-            foodDistance = 0
+            score += 10
+        elif foodDistance == 0:
+            score += 10
+        # reward for being close to food
         else:
-            foodDistance = (1 / foodDistance + 1)
+            score -= 2 * foodDistance
 
-        if scared > 1:
-            ghostDistance = - 10 / (ghostDistance + 1)
-        else:
-            ghostDistance = (1 / (ghostDistance + 1))
+        # reward for chasing scared ghosts
+        for ghost in newGhostStates:
+            if ghost.scaredTimer > 0:
+                scaredDistance = manhattanDistance(newPos, ghost.getPosition())
+                score += 25 / (scaredDistance + 1)
+        
 
-        if newPos == prevPos:
-            movement = -20
-        else:
-            movement = 0
 
-        print("foodCount", -foodCount)
-        print("ghostDistance", -ghostDistance)
-        print("foodDistance", foodDistance * 15)
+
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore() - (foodCount) - ghostDistance +( 15 * foodDistance) #+ movement
+        return score
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
