@@ -366,7 +366,76 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        bestMove = None
+        bestScore = float('-inf')
+        moves = gameState.getLegalActions(0)
+        for move in moves:
+            nextState = gameState.generateSuccessor(0, move)
+            v = self.value(nextState, self.depth, 1)
+
+            if v > bestScore:
+                bestScore = v
+                bestMove = move
+        return bestMove
+    
+    def value(self, gameState: GameState, depth: int, index: int):
+
+        if gameState.isWin():
+            return scoreEvaluationFunction(gameState)
+        elif gameState.isLose():
+            return scoreEvaluationFunction(gameState)
+        elif depth == 0:
+            return scoreEvaluationFunction(gameState)
+        else:
+            # pacman turn
+            if index == 0:
+                return self.maxValue(gameState, depth, index)
+            # ghost turn
+            elif index < gameState.getNumAgents():
+                return self.expValue(gameState, depth, index)
+            # new depth reached, pacman turn again
+            else:
+               return self.value(gameState, depth - 1, index = 0)
+    
+    def maxValue(self, gameState: GameState, depth: int, index: int):
+            
+            v = float('-inf')
+            # get moves
+            moves = gameState.getLegalActions(index)
+
+            # increment index
+            #self.index += 1
+
+            # for valid moves
+            for move in moves:
+
+                # generate next state
+                nextState = gameState.generateSuccessor(index, move)
+
+                # take max of successor and v in get action func
+                v = max(v, self.value(nextState, depth, index + 1))
+            
+
+            # return v
+            return v
+
+    def expValue(self, gameState: GameState, depth: int, index: int):
+        v = 0
+
+        # get moves
+        moves = gameState.getLegalActions(index)
+
+        # for valid moves
+        for move in moves:
+
+            # generate successor
+            nextState = gameState.generateSuccessor(index, move)
+            prob = 1 / len(moves)
+
+            v += prob * self.value(nextState, depth, index + 1)
+        
+        return v
+
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
@@ -376,7 +445,25 @@ def betterEvaluationFunction(currentGameState: GameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    def getAction(self, gameState: GameState):
+        """
+        Returns the minimax action using self.depth and self.evaluationFunction
+        """
+        "*** YOUR CODE HERE ***"
+        bestMove = None
+        bestScore = float('-inf')
+        alpha = float('-inf')
+        beta = float('inf')
+        moves = gameState.getLegalActions(0)
+        for move in moves:
+            nextState = gameState.generateSuccessor(0, move)
+            v = self.value(nextState, self.depth, 1, alpha, beta)
+
+            if v > bestScore:
+                bestScore = v
+                bestMove = move
+            alpha = max(alpha, bestScore)
+        return bestMove
 
 # Abbreviation
 better = betterEvaluationFunction
