@@ -76,9 +76,6 @@ class ReflexAgent(Agent):
         newGhostPositions = [ghostState.getPosition() for ghostState in newGhostStates]
         prevPos = currentGameState.getPacmanPosition()
 
-       # print(newPos, newFood, newScaredTimes, newGhostPositions)
-        #for element in newGhostStates:
-            #print(newGhostStates[0])
             
         ghostDistance = float('inf')
         foodCount = 0
@@ -103,9 +100,6 @@ class ReflexAgent(Agent):
             else:
             # reward for being far in general
                 score -= (1 / 1 + ghostDistance) * 1.5
-            #ghostDistance += manhattanDistance(newPos, element)
-
-        #print(ghostDistance)
 
         for i in range(newFood.width):
             for j in range(newFood.height):
@@ -113,8 +107,6 @@ class ReflexAgent(Agent):
                     foodCount += 1
                     if manhattanDistance(newPos, (i, j)) < foodDistance:
                         foodDistance = manhattanDistance(newPos, (i, j))
-
-        #print(foodDistance)
 
         
         # pen for remaining food
@@ -171,9 +163,6 @@ class MultiAgentSearchAgent(Agent):
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
-        # adding
-        #self.looked = int(looked)
-
 class MinimaxAgent(MultiAgentSearchAgent):
     """
     Your minimax agent (question 2)
@@ -218,11 +207,11 @@ class MinimaxAgent(MultiAgentSearchAgent):
     def value(self, gameState: GameState, depth: int, index: int):
 
         if gameState.isWin():
-            return scoreEvaluationFunction(gameState)
+            return self.evaluationFunction(gameState)
         elif gameState.isLose():
-            return scoreEvaluationFunction(gameState)
+            return self.evaluationFunction(gameState)
         elif depth == 0:
-            return scoreEvaluationFunction(gameState)
+            return self.evaluationFunction(gameState)
         else:
             # pacman turn
             if index == 0:
@@ -381,6 +370,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
+       # print("RUN THIS")
         bestMove = None
         bestScore = float('-inf')
         moves = gameState.getLegalActions(0)
@@ -396,11 +386,11 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     def value(self, gameState: GameState, depth: int, index: int):
 
         if gameState.isWin():
-            return scoreEvaluationFunction(gameState)
+            return self.evaluationFunction(gameState)
         elif gameState.isLose():
-            return scoreEvaluationFunction(gameState)
+            return self.evaluationFunction(gameState)
         elif depth == 0:
-            return scoreEvaluationFunction(gameState)
+            return self.evaluationFunction(gameState)
         else:
             # pacman turn
             if index == 0:
@@ -460,25 +450,95 @@ def betterEvaluationFunction(currentGameState: GameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    def getAction(self, gameState: GameState):
-        """
-        Returns the minimax action using self.depth and self.evaluationFunction
-        """
-        "*** YOUR CODE HERE ***"
-        bestMove = None
-        bestScore = float('-inf')
-        alpha = float('-inf')
-        beta = float('inf')
-        moves = gameState.getLegalActions(0)
-        for move in moves:
-            nextState = gameState.generateSuccessor(0, move)
-            v = self.value(nextState, self.depth, 1, alpha, beta)
+    # inits
+    pos = currentGameState.getPacmanPosition()
+    food = currentGameState.getFood()
+    ghostStates = currentGameState.getGhostStates()
+    ghostPositions = [ghostState.getPosition() for ghostState in ghostStates]
+    capsules = currentGameState.getCapsules()
 
-            if v > bestScore:
-                bestScore = v
-                bestMove = move
-            alpha = max(alpha, bestScore)
-        return bestMove
+    ghostDistance = float('inf')
+    foodCount = 0
+    foodDistance = float('inf')
+    secondFoodDistance = float('inf')
+    
+
+    # base score
+    score = currentGameState.getScore()
+    #score = 0
+
+    #ghosts
+    for element in ghostPositions:
+        ghostDistance = manhattanDistance(pos, element)
+        if ghostDistance < 1:
+            score -= 50
+        else:
+            score += 0
+
+    capDistance = float('inf')
+    for cap in capsules:
+        if capDistance > manhattanDistance(pos, cap):
+            capDistance = manhattanDistance(pos, cap)
+
+    if capDistance == float('inf'):
+        capDistance = 0
+
+    if capDistance == 0:
+        score 
+    # 3 
+    if (ghostDistance < 3):
+        if capDistance == 0:
+            score -= capDistance * 25
+        else:
+            score -= capDistance * 2
+    else:
+        score += 0
+    # food
+    foodDistanceArray = []
+    tmpDistance = ('inf')
+    for i in range(food.width):
+        for j in range(food.height):
+            if food[i][j]:
+                foodCount += 1
+                tmpDistance = manhattanDistance(pos, (i, j))
+                foodDistanceArray.append(tmpDistance)
+    
+    #print(foodDistanceArray)
+    if len(foodDistanceArray) >= 2:
+        foodDistance = foodDistanceArray[0]
+        secondFoodDistance = foodDistanceArray[1]
+    elif len(foodDistanceArray) >= 1:
+        foodDistance = foodDistanceArray[0]
+        secondFoodDistance = -40
+    else:
+        foodDistance = -40
+        secondFoodDistance = -40
+    # pen for remaining food
+    score -= 200 * foodCount
+    # no food left
+    if foodDistance == float('inf'):
+        score += 10
+    elif foodDistance == 0:
+        score += 20
+    else:
+        score -= 4 * foodDistance
+
+    if secondFoodDistance == float('inf'):
+        score = 0
+    else:
+        score -= 4.5 * secondFoodDistance
+    
+    #print(foodDistance, secondFoodDistance, currentGameState.getScore())
+
+    
+    # reward for chasing scared ghosts
+    for ghost in ghostStates:
+        if ghost.scaredTimer > 0:
+            scaredDistance = manhattanDistance(pos, ghost.getPosition())
+            score += 25 / (scaredDistance + 1)
+    #print("score", score)
+    return score
+    
 
 # Abbreviation
 better = betterEvaluationFunction
